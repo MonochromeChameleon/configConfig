@@ -80,7 +80,7 @@ var initFn = function (filePathOrConfig) {
 };
 
 // On initial load, see whether we have a file in the default location.
-if (fs.existsSync(defaultConfig.path)) { // fs.exists[Sync] is being deprecated, but stick with it for now.
+if (fs.existsSync(defaultConfig.path + '.js')) { // fs.exists[Sync] is being deprecated, but stick with it for now.
 	
 	// If that file exists and has a _configConfig property, we assume that that property defines the config behaviour.
 	var tryConfig = require(defaultConfig.path);	
