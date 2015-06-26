@@ -1,5 +1,5 @@
 {
-  "name": "ow-config",
+  "name": "configConfig",
   "version": "0.0.1",
   "description": "Environment-specific config handling for express (and probably other node frameworks)",
   "main": "index.js",
