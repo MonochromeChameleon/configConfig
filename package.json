@@ -1,0 +1,17 @@
+{
+  "name": "ow-config",
+  "version": "0.0.1",
+  "description": "Environment-specific config handling for express (and probably other node frameworks)",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "config"
+  ],
+  "author": "Hugh Greenish",
+  "license": "MIT",
+  "dependencies": {
+    "lodash": "^3.9.3"
+  }
+}
