@@ -35,10 +35,10 @@ function handleInitOptions(opts) {
 // Applies the environment-specific config over the top of our base config.
 function applyEnvironmentConfig(config, configConfig) {
     // configConfig.env is either our process environment, or else a specifically-configured override.
-    var environmentConfig = (config._environments || {})[configConfig.env];
+    var environmentConfig = config._environments || {};
 
     // Apply the environment-specific config over the top of our base.
-    apply(environmentConfig, config);
+    apply(environmentConfig[configConfig.env], config);
 
     // Clean up behind ourselves.
     delete config._environments;
@@ -85,8 +85,8 @@ var initFn = function (initOptions) {
 if (fs.existsSync(defaultConfig.path + '.js')) { // fs.exists[Sync] is being deprecated, but stick with it for now.
 
     // If that file exists and has a _configConfig property, we assume that that property defines the config behaviour.
-    var tryConfig = require(defaultConfig.path);
-    var configConfig = apply((tryConfig || {})._configConfig, defaultConfig);
+    var tryConfig = require(defaultConfig.path) || {};
+    var configConfig = apply(tryConfig._configConfig, defaultConfig);
 
     // If our config includes an autoload property, just load it and export the config object directly.
     if (configConfig.autoload === true) {
