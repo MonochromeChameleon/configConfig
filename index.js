@@ -20,6 +20,8 @@ var defaultConfig = {
 };
 
 function getValidFilePath(filePath) {
+    // Try various file locations until one exists or we run out of places to look
+
     if (fs.existsSync(filePath)) {
         return filePath;
     }
@@ -30,7 +32,14 @@ function getValidFilePath(filePath) {
         return testPath;
     }
 
+    testPath = path.join(__dirname, filePath);
+
+    if (fs.existsSync(testPath)) {
+        return testPath;
+    }
+
     if (!/\.js$/.test(filePath)) {
+        // Try again with a .js extension
         return getValidFilePath(filePath + '.js');
     }
 }
