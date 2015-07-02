@@ -20,15 +20,18 @@ var defaultConfig = {
 };
 
 function getValidFilePath(filePath) {
-    var testPath = /\.js$/.test(filePath) ? filePath : filePath + '.js';
+    if (fs.existsSync(filePath)) {
+        return filePath;
+    }
+
+    testPath = path.join(appDir, filePath);
+
     if (fs.existsSync(testPath)) {
         return testPath;
     }
 
-    testPath = path.join(appDir, testPath);
-
-    if (fs.existsSync(testPath)) {
-        return testPath;
+    if (!/\.js$/.test(filePath)) {
+        return getValidFilePath(filePath + '.js');
     }
 }
 
