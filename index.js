@@ -4,14 +4,42 @@ var _ = require('lodash');
 var fs = require('fs');
 var path = require('path');
 
+var ENVIRONMENT = "environment";
+var IMPORT = "import";
+
 var appDir = path.dirname(require.main.filename);
 var defaultConfig = {
     global: false,
     globalVariableName: 'config',
-    path: appDir + '/config',
+    path: path.join(appDir, 'config'),
     env: process.env.NODE_ENV,
-    autoload: false
+    autoload: false,
+    environmentPropName: '_environments',
+    importPropName: '_imports',
+    loadPriority: ENVIRONMENT
 };
+
+function getValidFilePath(filePath) {
+    var testPath = /\.js$/.test(filePath) ? filePath : filePath + '.js';
+    if (fs.existsSync(testPath)) {
+        return testPath;
+    }
+
+    testPath = path.join(appDir, testPath);
+
+    if (fs.existsSync(testPath)) {
+        return testPath;
+    }
+}
+
+function fileExists(filePath) {
+    return !!getValidFilePath(filePath);
+}
+
+function loadFile(filePath) {
+    var validFilePath = getValidFilePath(filePath);
+    return !!validFilePath ? require(validFilePath) : {};
+}
 
 // Adds properties of config to base, overwriting as required.
 function apply(config, base) {
@@ -35,14 +63,56 @@ function handleInitOptions(opts) {
 // Applies the environment-specific config over the top of our base config.
 function applyEnvironmentConfig(config, configConfig) {
     // configConfig.env is either our process environment, or else a specifically-configured override.
-    var environmentConfig = config._environments || {};
+    var environmentConfig = config[configConfig.environmentPropName] || {};
 
     // Apply the environment-specific config over the top of our base.
     apply(environmentConfig[configConfig.env], config);
 
     // Clean up behind ourselves.
-    delete config._environments;
-    delete config._configConfig;
+    delete config[configConfig.environmentPropName];
+
+    return config;
+}
+
+function processImports(config, configConfig) {
+    var imports = config[configConfig.importPropName];
+    if (typeof imports === "string") {
+        imports = [imports];
+    }
+
+    _.each(imports, function (imp) {
+        var imported = loadFile(imp);
+        apply(imported, config);
+    });
+
+    delete config[configConfig.importPropName];
+
+    return config;
+}
+
+function handleEnvironmentAndImports(config, configConfig, loadPriority) {
+
+    while (config[configConfig.environmentPropName] || config[configConfig.importPropName]) {
+        // If Imports are prioritized, we load them all up until we have no more - imports can be nested
+        while (loadPriority === IMPORT && config[configConfig.importPropName]) {
+            config = processImports(config, configConfig);
+        }
+
+        // Load environment - this is probably never going to be nested, but we may as well support it.
+        while (loadPriority === ENVIRONMENT && config[configConfig.environmentPropName]) {
+            config = applyEnvironmentConfig(config, configConfig);
+        }
+
+        // Handle non-prioritized loads one at a time, any nesting will be handled by the outer loop
+
+        if (config[configConfig.importPropName]) {
+            config = processImports(config, configConfig);
+        }
+
+        if (config[configConfig.environmentPropName]) {
+            config = applyEnvironmentConfig(config, configConfig);
+        }
+    }
 
     return config;
 }
@@ -62,9 +132,10 @@ function updateReferences(config, configConfig) {
 
 function load(configConfig) {
     // Get initial config.
-    var baseConfig = apply(require(configConfig.path), {});
-    // Apply environment over the top.
-    var config = applyEnvironmentConfig(baseConfig, configConfig);
+    var baseConfig = apply(loadFile(configConfig.path), {});
+
+    var config = handleEnvironmentAndImports(baseConfig, configConfig, configConfig.loadPriority);
+    delete config._configConfig;
 
     // Update the exports etc. so that the config properties are all available externally.
     updateReferences(config, configConfig);
@@ -82,10 +153,10 @@ var initFn = function (initOptions) {
 };
 
 // On initial load, see whether we have a file in the default location.
-if (fs.existsSync(defaultConfig.path + '.js')) { // fs.exists[Sync] is being deprecated, but stick with it for now.
+if (fileExists(defaultConfig.path)) {
 
     // If that file exists and has a _configConfig property, we assume that that property defines the config behaviour.
-    var tryConfig = require(defaultConfig.path) || {};
+    var tryConfig = loadFile(defaultConfig.path);
     var configConfig = apply(tryConfig._configConfig, defaultConfig);
 
     // If our config includes an autoload property, just load it and export the config object directly.
