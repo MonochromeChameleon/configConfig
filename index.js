@@ -26,7 +26,7 @@ function getValidFilePath(filePath) {
         return filePath;
     }
 
-    testPath = path.join(appDir, filePath);
+    var testPath = path.join(appDir, filePath);
 
     if (fs.existsSync(testPath)) {
         return testPath;
