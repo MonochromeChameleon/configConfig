@@ -11,7 +11,7 @@ var appDir = path.dirname(require.main.filename);
 var defaultConfig = {
     global: false,
     globalVariableName: 'config',
-    path: path.join(appDir, 'config'),
+    path: 'config',
     env: process.env.NODE_ENV,
     autoload: false,
     environmentPropName: '_environments',
@@ -32,10 +32,24 @@ function getValidFilePath(filePath) {
         return testPath;
     }
 
+    if (/node_modules/.test(testPath)) {
+        testPath = path.join(testPath.match(/(.+)node_modules/)[1], filePath);
+        if (fs.existsSync(testPath)) {
+            return testPath;
+        }
+    }
+
     testPath = path.join(__dirname, filePath);
 
     if (fs.existsSync(testPath)) {
         return testPath;
+    }
+
+    if (/node_modules/.test(testPath)) {
+        testPath = path.join(testPath.match(/(.+)node_modules/)[1], filePath);
+        if (fs.existsSync(testPath)) {
+            return testPath;
+        }
     }
 
     if (!/\.js$/.test(filePath)) {
