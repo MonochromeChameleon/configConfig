@@ -121,9 +121,6 @@ function updateReferences(config, configConfig) {
     // Add properties to initial export.
     apply(config, initFn);
 
-    // Override export so we get the object directly whenever we subsequently require() this module.
-    module.exports = config;
-
     // Declare a global variable if and only if we have explicitly decided to.
     if (configConfig.global === true) {
         GLOBAL[configConfig.globalVariableName] = config;
@@ -163,6 +160,6 @@ if (fileExists(defaultConfig.path)) {
     if (configConfig.autoload === true) {
         load(configConfig);
     }
-} else {
-    module.exports = initFn;
 }
+
+module.exports = initFn;
