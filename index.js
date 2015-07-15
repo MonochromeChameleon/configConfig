@@ -7,6 +7,8 @@ var path = require('path');
 var ENVIRONMENT = "environment";
 var IMPORT = "import";
 
+var loaded = false;
+
 var appDir = path.dirname(require.main.filename);
 var defaultConfig = {
     global: false,
@@ -142,11 +144,17 @@ function load(configConfig) {
 
 var initFn = function (initOptions) {
 
-    // Process arguments and default config for our actual config import.
-    var opts = handleInitOptions(initOptions);
-    var configConfig = apply(opts, defaultConfig);
+    if (!loaded) {
+        // Process arguments and default config for our actual config import.
+        var opts = handleInitOptions(initOptions);
+        var configConfig = apply(opts, defaultConfig);
 
-    return load(configConfig);
+        load(configConfig);        
+
+        loaded = true;
+    }
+
+    return initFn;
 };
 
 // On initial load, see whether we have a file in the default location.
